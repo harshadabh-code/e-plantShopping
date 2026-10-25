@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { addItem } from './CartSlice';
 import CartItem from './CartItem';
@@ -49,11 +49,48 @@ function ProductList({ onHomeClick }) {
   const cartItems = useSelector((state) => state.cart.items);
   const [showCart, setShowCart] = useState(false);
 
-  // Total number of plants in the cart (shown next to the cart icon)
-  const totalQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  // Remembers which plants were added (starts from what is already in the cart)
+  const [addedToCart, setAddedToCart] = useState(() =>
+    Object.fromEntries(cartItems.map((item) => [item.name, true]))
+  );
 
-  // A plant's button is disabled while it is in the cart
-  const isInCart = (name) => cartItems.some((item) => item.name === name);
+  // Re-enable the button if a plant is removed from the cart
+  useEffect(() => {
+    setAddedToCart((prev) => {
+      const updated = {};
+      cartItems.forEach((item) => {
+        updated[item.name] = true;
+      });
+      return updated;
+    });
+  }, [cartItems]);
+
+  const calculateTotalQuantity = () =>
+    cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
+  const handleHomeClick = (e) => {
+    e.preventDefault();
+    onHomeClick();
+  };
+
+  const handlePlantsClick = (e) => {
+    e.preventDefault();
+    setShowCart(false);
+  };
+
+  const handleCartClick = (e) => {
+    e.preventDefault();
+    setShowCart(true);
+  };
+
+  const handleContinueShopping = () => {
+    setShowCart(false);
+  };
+
+  const handleAddToCart = (plant) => {
+    dispatch(addItem(plant));
+    setAddedToCart((prev) => ({ ...prev, [plant.name]: true }));
+  };
 
   return (
     <div>
@@ -63,33 +100,10 @@ function ProductList({ onHomeClick }) {
           <h3>Paradise Nursery</h3>
         </div>
         <div className="nav-links">
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              onHomeClick();
-            }}
-          >
-            Home
-          </a>
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              setShowCart(false);
-            }}
-          >
-            Plants
-          </a>
-          <a
-            href="#"
-            className="cart-link"
-            onClick={(e) => {
-              e.preventDefault();
-              setShowCart(true);
-            }}
-          >
-            🛒 Cart <span className="cart-count">{totalQuantity}</span>
+          <a href="#" onClick={handleHomeClick}>Home</a>
+          <a href="#" onClick={handlePlantsClick}>Plants</a>
+          <a href="#" className="cart-link" onClick={handleCartClick}>
+            🛒 Cart <span className="cart-count">{calculateTotalQuantity()}</span>
           </a>
         </div>
       </nav>
@@ -99,7 +113,7 @@ function ProductList({ onHomeClick }) {
           {plantsArray.map((group) => (
             <div key={group.category}>
               <h2 className="category-title">{group.category}</h2>
-              <div className="category-row">
+              <div className="product-list category-row">
                 {group.plants.map((plant) => (
                   <div className="product-card" key={plant.name}>
                     <img src={plant.image} alt={plant.name} />
@@ -108,10 +122,10 @@ function ProductList({ onHomeClick }) {
                     <p className="price">{plant.cost}</p>
                     <button
                       className="add-to-cart-button"
-                      disabled={isInCart(plant.name)}
-                      onClick={() => dispatch(addItem(plant))}
+                      disabled={addedToCart[plant.name]}
+                      onClick={() => handleAddToCart(plant)}
                     >
-                      {isInCart(plant.name) ? 'Added to Cart' : 'Add to Cart'}
+                      {addedToCart[plant.name] ? 'Added to Cart' : 'Add to Cart'}
                     </button>
                   </div>
                 ))}
@@ -120,7 +134,7 @@ function ProductList({ onHomeClick }) {
           ))}
         </div>
       ) : (
-        <CartItem onContinueShopping={() => setShowCart(false)} />
+        <CartItem onContinueShopping={handleContinueShopping} />
       )}
     </div>
   );

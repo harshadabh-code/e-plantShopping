@@ -38,6 +38,11 @@ const CartItem = ({ onContinueShopping }) => {
     alert('Coming Soon');
   };
 
+  const handleContinueShopping = (e) => {
+  e.preventDefault();
+  onContinueShopping(e);
+};
+
   return (
     <div className="cart-container">
       <h2 className="total-amount">
@@ -85,13 +90,13 @@ const CartItem = ({ onContinueShopping }) => {
       </div>
 
       <div className="continue-shopping-container">
-        <button className="get-started-button1" onClick={onContinueShopping}>
-          Continue Shopping
-        </button>
-        <button className="get-started-button1" onClick={handleCheckoutShopping}>
-          Checkout
-        </button>
-      </div>
+  <button className="get-started-button" onClick={handleContinueShopping}>
+    Continue Shopping
+  </button>
+  <button className="get-started-button1" onClick={handleCheckoutShopping}>
+    Checkout
+  </button>
+</div>
     </div>
   );
 };
